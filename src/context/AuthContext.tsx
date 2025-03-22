@@ -36,13 +36,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Check if user is logged in on mount
     const token = localStorage.getItem('token');
+    
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      // Fetch current user data using the token
       api.get('/api/auth/me')
         .then(response => {
-          setCurrentUser(response.data);
+          if (response.data && response.data.user) {
+            setCurrentUser(response.data.user);
+          }
         })
         .catch(() => {
+          // Clear invalid token
           localStorage.removeItem('token');
           delete api.defaults.headers.common['Authorization'];
         })
@@ -57,9 +63,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      const { token, user } = response.data;
+      const { user, token } = response.data;
+      
+      // Store the token
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       setCurrentUser(user);
     } catch (error) {
       throw error;
@@ -69,9 +78,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (data: SignupData) => {
     try {
       const response = await api.post('/api/auth/signup', data);
-      const { token, user } = response.data;
+      const { user, token } = response.data;
+      
+      // Store the token
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       setCurrentUser(user);
     } catch (error) {
       throw error;
@@ -79,9 +91,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    // Clear auth data
     localStorage.removeItem('token');
     delete api.defaults.headers.common['Authorization'];
     setCurrentUser(null);
+    
+    // Force redirect to login page
+    window.location.href = '/signin';
   };
 
   const value = {

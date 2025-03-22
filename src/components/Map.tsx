@@ -1,3 +1,51 @@
+// import { useEffect, useRef } from 'react';
+
+// const Map = () => {
+//   return (
+//     <div className="w-full h-full min-h-[400px] rounded-lg bg-gray-200 flex flex-col items-center justify-center relative overflow-hidden">
+//       {/* Simple Map Representation */}
+//       <div className="absolute inset-0 grid grid-cols-10 grid-rows-10">
+//         {/* Grid lines */}
+//         {Array.from({ length: 10 }).map((_, i) => (
+//           <div key={`h-${i}`} className="col-span-10 border-b border-gray-300" />
+//         ))}
+//         {Array.from({ length: 10 }).map((_, i) => (
+//           <div key={`v-${i}`} className="row-span-10 border-r border-gray-300" />
+//         ))}
+        
+//         {/* Random donation points */}
+//         {Array.from({ length: 15 }).map((_, i) => (
+//           <div 
+//             key={`point-${i}`}
+//             className="absolute w-3 h-3 rounded-full bg-primary shadow-md"
+//             style={{
+//               left: `${Math.random() * 90 + 5}%`,
+//               top: `${Math.random() * 90 + 5}%`,
+//               transform: 'translate(-50%, -50%)',
+//               boxShadow: '0 0 0 4px rgba(249, 115, 22, 0.2)'
+//             }}
+//           />
+//         ))}
+        
+//         {/* Center point */}
+//         <div 
+//           className="absolute left-1/2 top-1/2 w-4 h-4 rounded-full bg-green-700 z-10"
+//           style={{
+//             transform: 'translate(-50%, -50%)',
+//             boxShadow: '0 0 0 4px rgba(22, 101, 52, 0.2)'
+//           }}
+//         />
+//       </div>
+      
+//       {/* Map label */}
+//       <div className="absolute bottom-4 left-4 bg-white/90 px-3 py-1 rounded text-sm font-medium z-20">
+//         Donation Locations Map
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Map;
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";

@@ -21,7 +21,8 @@ import { toast } from 'sonner';
 import { NotificationItem } from './types';
 
 interface DashboardOverviewProps {
-  currentUser: any;
+  user: any;
+  donations: DonationItem[];
   notifications: NotificationItem[];
   setNotifications: React.Dispatch<React.SetStateAction<NotificationItem[]>>;
   getFilteredDonations: (status?: DonationItem['status']) => DonationItem[];
@@ -30,7 +31,8 @@ interface DashboardOverviewProps {
 }
 
 const DashboardOverview = ({
-  currentUser,
+  user,
+  donations,
   notifications,
   setNotifications,
   getFilteredDonations,
@@ -51,7 +53,7 @@ const DashboardOverview = ({
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {currentUser.name}!
+            Welcome back, {user.name}!
           </p>
         </div>
         <Button 
@@ -86,7 +88,7 @@ const DashboardOverview = ({
                   {getFilteredDonations('available').length}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? '+2 from last week' 
                     : 'in your area'}
                 </p>
@@ -96,9 +98,9 @@ const DashboardOverview = ({
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? 'Reserved Items' 
-                    : currentUser.role === 'recipient'
+                    : user.role === 'recipient'
                       ? 'Your Reservations'
                       : 'Pending Deliveries'}
                 </CardTitle>
@@ -109,7 +111,7 @@ const DashboardOverview = ({
                   {getFilteredDonations('reserved').length}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  awaiting {currentUser.role === 'volunteer' ? 'delivery' : 'pickup'}
+                  awaiting {user.role === 'volunteer' ? 'delivery' : 'pickup'}
                 </p>
               </CardContent>
             </Card>
@@ -117,7 +119,7 @@ const DashboardOverview = ({
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? 'Community Impact' 
                     : 'Recent Activity'}
                 </CardTitle>
@@ -125,12 +127,12 @@ const DashboardOverview = ({
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? '24 meals' 
                     : '12 actions'}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? 'provided this month' 
                     : 'in the last 30 days'}
                 </p>
@@ -191,9 +193,9 @@ const DashboardOverview = ({
                       </div>
                       <h3 className="text-lg font-semibold">No Activity Yet</h3>
                       <p className="text-sm text-muted-foreground max-w-sm mt-1">
-                        {currentUser.role === 'donor' 
+                        {user.role === 'donor' 
                           ? 'Start by creating your first donation listing' 
-                          : currentUser.role === 'recipient'
+                          : user.role === 'recipient'
                             ? 'Browse available donations and make your first reservation'
                             : 'Check for delivery requests in your area'}
                       </p>
@@ -301,12 +303,12 @@ const DashboardOverview = ({
                 </div>
                 <h3 className="text-xl font-semibold">No Donations Found</h3>
                 <p className="text-sm text-muted-foreground max-w-md mt-2 mb-6">
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? 'You haven\'t created any donations yet. Start by listing your first donation.' 
                     : 'There are no donations matching your criteria at this time.'}
                 </p>
                 
-                {currentUser.role === 'donor' && (
+                {user.role === 'donor' && (
                   <Button 
                     onClick={() => setActiveView('donate')}
                     className="bg-foodshare-500 hover:bg-foodshare-600 text-white"
@@ -357,12 +359,12 @@ const DashboardOverview = ({
                 </div>
                 <h3 className="text-xl font-semibold">No Donations Found</h3>
                 <p className="text-sm text-muted-foreground max-w-md mt-2 mb-6">
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? 'You haven\'t created any donations yet. Start by listing your first donation.' 
                     : 'There are no donations matching your criteria at this time.'}
                 </p>
                 
-                {currentUser.role === 'donor' && (
+                {user.role === 'donor' && (
                   <Button 
                     onClick={() => setActiveView('donate')}
                     className="bg-foodshare-500 hover:bg-foodshare-600 text-white"
@@ -382,16 +384,16 @@ const DashboardOverview = ({
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <LineChart className="mr-2 h-4 w-4" />
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? 'Your Donation Activity' 
-                    : currentUser.role === 'recipient'
+                    : user.role === 'recipient'
                       ? 'Food Received'
                       : 'Delivery Activity'}
                 </CardTitle>
                 <CardDescription>
-                  {currentUser.role === 'donor' 
+                  {user.role === 'donor' 
                     ? 'Donations over time' 
-                    : currentUser.role === 'recipient'
+                    : user.role === 'recipient'
                       ? 'Food received over time'
                       : 'Deliveries completed over time'}
                 </CardDescription>
@@ -436,19 +438,19 @@ const DashboardOverview = ({
                   <div className="bg-secondary/50 rounded-lg p-4 text-center">
                     <p className="text-sm text-muted-foreground mb-1">Meals Shared</p>
                     <h3 className="text-2xl font-bold">
-                      {currentUser.role === 'donor' ? '42' : currentUser.role === 'recipient' ? '89' : '156'}
+                      {user.role === 'donor' ? '42' : user.role === 'recipient' ? '89' : '156'}
                     </h3>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-4 text-center">
                     <p className="text-sm text-muted-foreground mb-1">Food Saved (kg)</p>
                     <h3 className="text-2xl font-bold">
-                      {currentUser.role === 'donor' ? '68' : currentUser.role === 'recipient' ? '142' : '275'}
+                      {user.role === 'donor' ? '68' : user.role === 'recipient' ? '142' : '275'}
                     </h3>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-4 text-center">
                     <p className="text-sm text-muted-foreground mb-1">CO₂ Reduced</p>
                     <h3 className="text-2xl font-bold">
-                      {currentUser.role === 'donor' ? '38' : currentUser.role === 'recipient' ? '78' : '145'}
+                      {user.role === 'donor' ? '38' : user.role === 'recipient' ? '78' : '145'}
                       <span className="text-sm">kg</span>
                     </h3>
                   </div>

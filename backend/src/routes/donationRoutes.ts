@@ -5,17 +5,19 @@ import {
   createDonation,
   updateDonation,
   updateDonationStatus,
-  deleteDonation
+  deleteDonation,
+  getAnalytics
 } from '../controllers/donationController.js';
 
 const router = express.Router();
 
 // Donation routes
 router.get('/', getDonations);
+router.get('/analytics', getAnalytics);
 router.get('/:id', getDonationById);
 router.post('/', createDonation);
 router.put('/:id', updateDonation);
-router.patch('/:id/status', updateDonationStatus);
+router.put('/:id/status', updateDonationStatus);
 router.delete('/:id', deleteDonation);
 
 export default router;

@@ -1,6 +1,5 @@
-
-import { useState } from 'react';
-import { Clock, MapPin, ExternalLink, Award } from 'lucide-react';
+import { useState } from "react";
+import { Clock, MapPin, ExternalLink } from "lucide-react";
 import { 
   Card, 
   CardHeader, 
@@ -12,16 +11,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import Map from "@/components/Map";
 
 export interface DonationItem {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   description: string;
   donorName: string;
   donorId: string;
-  location: string;
+  location: string; // Expected format: "latitude, longitude"
   expiry: string;
   quantity: string;
   status: 'available' | 'reserved' | 'completed';
@@ -37,19 +38,28 @@ interface DonationCardProps {
 
 const DonationCard = ({ donation, onStatusChange }: DonationCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const { currentUser } = useAuth();
-  
+
   const handleReserve = () => {
-    if (onStatusChange) {
-      onStatusChange(donation.id, 'reserved');
-      toast.success("Donation reserved successfully!");
+    const donationId = donation?.id || donation?._id;
+    if (onStatusChange && donation && donationId) {
+      console.log("Reserving donation with ID:", donationId);
+      onStatusChange(donationId, 'reserved');
+    } else {
+      console.error("Cannot reserve: Invalid donation ID", donation);
+      toast.error("Failed to reserve donation. Invalid ID.");
     }
   };
   
   const handleComplete = () => {
-    if (onStatusChange) {
-      onStatusChange(donation.id, 'completed');
-      toast.success("Donation marked as completed!");
+    const donationId = donation?.id || donation?._id;
+    if (onStatusChange && donation && donationId) {
+      console.log("Completing donation with ID:", donationId);
+      onStatusChange(donationId, 'completed');
+    } else {
+      console.error("Cannot complete: Invalid donation ID", donation);
+      toast.error("Failed to complete donation. Invalid ID.");
     }
   };
 
@@ -66,6 +76,19 @@ const DonationCard = ({ donation, onStatusChange }: DonationCardProps) => {
     reserved: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
     completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   };
+
+  const getLocationCoords = () => {
+    const match = donation.location.match(/Lat:\s*([-0-9.]+),\s*Lng:\s*([-0-9.]+)/);
+    if (match) {
+      const lat = parseFloat(match[1]);
+      const lng = parseFloat(match[2]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return [lat, lng] as [number, number];
+      }
+    }
+    return [20.5937, 78.9629] as [number, number]; // Default (India) if parsing fails
+  };
+  
 
   return (
     <>
@@ -100,7 +123,10 @@ const DonationCard = ({ donation, onStatusChange }: DonationCardProps) => {
           </div>
         </CardHeader>
         <CardContent className="space-y-2 flex-grow">
-          <div className="flex items-center text-sm text-muted-foreground">
+          <div 
+            className="flex items-center text-sm text-muted-foreground cursor-pointer hover:text-foodshare-600 transition" 
+            onClick={() => setShowMap(true)}
+          >
             <MapPin className="mr-1 h-4 w-4" />
             <span>{donation.location}</span>
           </div>
@@ -140,7 +166,7 @@ const DonationCard = ({ donation, onStatusChange }: DonationCardProps) => {
               </Button>
             )}
             
-            {currentUser?.role === 'volunteer' && donation.status === 'reserved' && (
+            {currentUser?.role === 'donor' && donation.status === 'reserved' && (
               <Button 
                 variant="default" 
                 size="sm" 
@@ -154,6 +180,7 @@ const DonationCard = ({ donation, onStatusChange }: DonationCardProps) => {
         </CardFooter>
       </Card>
 
+      {/* Details Dialog */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -182,7 +209,13 @@ const DonationCard = ({ donation, onStatusChange }: DonationCardProps) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <h4 className="text-sm font-medium mb-1">Location</h4>
-                <div className="flex items-center text-sm text-muted-foreground">
+                <div 
+                  className="flex items-center text-sm text-muted-foreground cursor-pointer hover:text-foodshare-600 transition"
+                  onClick={() => {
+                    setShowDetails(false);
+                    setTimeout(() => setShowMap(true), 100);
+                  }}
+                >
                   <MapPin className="mr-1 h-4 w-4" />
                   <span>{donation.location}</span>
                 </div>
@@ -215,25 +248,47 @@ const DonationCard = ({ donation, onStatusChange }: DonationCardProps) => {
               <Button 
                 className="w-full bg-foodshare-500 hover:bg-foodshare-600 text-white" 
                 onClick={() => {
-                  handleReserve();
-                  setShowDetails(false);
+                  const donationId = donation?.id || donation?._id;
+                  if (donation && donationId) {
+                    handleReserve();
+                    setShowDetails(false);
+                  }
                 }}
               >
                 Reserve This Donation
               </Button>
             )}
             
-            {currentUser?.role === 'volunteer' && donation.status === 'reserved' && (
+            {currentUser?.role === 'donor' && donation.status === 'reserved' && (
               <Button 
                 className="w-full bg-foodshare-500 hover:bg-foodshare-600 text-white" 
                 onClick={() => {
-                  handleComplete();
-                  setShowDetails(false);
+                  const donationId = donation?.id || donation?._id;
+                  if (donation && donationId) {
+                    handleComplete();
+                    setShowDetails(false);
+                  }
                 }}
               >
-                Mark Delivery as Completed
+                Complete Delivery
               </Button>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Map Dialog */}
+      <Dialog open={showMap} onOpenChange={setShowMap}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Donation Location</DialogTitle>
+          </DialogHeader>
+          <div className="h-64">
+            <Map 
+              center={getLocationCoords()} 
+              markers={[{ position: getLocationCoords(), tooltip: donation.title }]} 
+              height="240px" 
+            />
           </div>
         </DialogContent>
       </Dialog>

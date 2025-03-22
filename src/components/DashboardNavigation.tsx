@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,7 +14,8 @@ import {
   ChevronRight,
   Truck,
   LineChart,
-  BookOpen
+  BookOpen,
+  Heart
 } from "lucide-react";
 
 interface NavigationItem {
@@ -77,7 +77,7 @@ const navigationItems: NavigationItem[] = [
   {
     name: "Community",
     icon: <Users className="h-4 w-4" />,
-    href: "community",
+    href: "/community",
     role: "all",
   },
   {
@@ -85,6 +85,18 @@ const navigationItems: NavigationItem[] = [
     icon: <Settings className="h-4 w-4" />,
     href: "settings",
     role: "all",
+  },
+  {
+    name: "Campaigns",
+    icon: <Heart className="h-4 w-4" />,
+    href: "campaigns",
+    role: "donor",
+  },
+  {
+    name: "My Campaigns",
+    icon: <Heart className="h-4 w-4" />,
+    href: "campaigns",
+    role: "recipient",
   },
 ];
 
@@ -99,7 +111,18 @@ const DashboardNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const pathParts = location.pathname.split('/');
-  const currentPath = pathParts[pathParts.length - 1] || 'overview';
+  
+  // Handle the current path detection properly for both relative and absolute paths
+  const currentPath = (item: NavigationItem) => {
+    if (item.href.startsWith('/')) {
+      // For absolute paths, check if the current location matches
+      return location.pathname === item.href;
+    } else {
+      // For dashboard routes, check if the last part of the path matches
+      const lastPart = pathParts[pathParts.length - 1] || 'overview';
+      return lastPart === item.href;
+    }
+  };
 
   const handleSignOut = () => {
     logout();
@@ -119,18 +142,25 @@ const DashboardNavigation = () => {
             {filteredNavigation.map((item) => (
               <Button
                 key={item.name}
-                variant={currentPath === item.href ? "default" : "ghost"}
+                variant={currentPath(item) ? "default" : "ghost"}
                 className={cn(
                   "justify-start md:w-full",
-                  currentPath === item.href
+                  currentPath(item)
                     ? "bg-foodshare-500 hover:bg-foodshare-500/90 text-white"
                     : ""
                 )}
-                onClick={() => navigate(`/dashboard/${item.href}`)}
+                onClick={() => {
+                  // Check if the href starts with a slash - if so, navigate to the absolute path
+                  if (item.href.startsWith('/')) {
+                    navigate(item.href);
+                  } else {
+                    navigate(`/dashboard/${item.href}`);
+                  }
+                }}
               >
                 {item.icon}
                 <span className="ml-2">{item.name}</span>
-                {currentPath === item.href && (
+                {currentPath(item) && (
                   <ChevronRight className="ml-auto h-4 w-4" />
                 )}
               </Button>

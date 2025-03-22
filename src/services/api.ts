@@ -14,7 +14,8 @@ export interface User {
 }
 
 export interface DonationItem {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   description: string;
   donorName: string;
@@ -39,6 +40,7 @@ export interface CreateDonationData {
   quantity: string;
   imageUrl: string;
   foodType: string;
+  status?: 'available' | 'reserved' | 'completed';
 }
 
 export interface CreateUserData {
@@ -65,33 +67,70 @@ export interface SignupData {
   role: 'donor' | 'recipient' | 'volunteer';
 }
 
+export interface AnalyticsData {
+  overview: {
+    totalDonations: number;
+    availableDonations: number;
+    reservedDonations: number;
+    completedDonations: number;
+    uniqueDonors: number;
+    uniqueLocations: number;
+    estimatedMealsProvided: number;
+    estimatedFoodWasteSaved: number;
+    estimatedCO2Saved: number;
+    expiringToday: number;
+    expiringThisWeek: number;
+  };
+  charts: {
+    monthlyDonations: { month: string; donations: number }[];
+    foodTypeData: { name: string; value: number }[];
+    statusData: { name: string; value: number }[];
+  };
+  topDonors: {
+    name: string;
+    donations: number;
+    percent: number;
+  }[];
+}
+
+// Create an Axios instance with default configuration
 export const api = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to add the token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Add a request interceptor to include the auth token in requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-// Add a response interceptor to handle errors
+// Add a response interceptor to handle common errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+    if (error.response) {
+      // Server responded with an error status
+      if (error.response.status === 401) {
+        // Unauthorized - clear auth data and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        window.location.href = '/signin';
+      }
     }
     return Promise.reject(error);
   }
 );
 
+// API methods for common operations
 export const apiMethods = {
   // Auth endpoints
   async login(data: LoginData): Promise<{ message: string; user: User }> {
@@ -156,7 +195,7 @@ export const apiMethods = {
   },
 
   async updateDonationStatus(id: string, status: 'available' | 'reserved' | 'completed'): Promise<{ message: string; donation: DonationItem }> {
-    const response = await api.patch(`/api/donations/${id}/status`, { status });
+    const response = await api.put(`/api/donations/${id}/status`, { status });
     return response.data;
   },
 
@@ -167,6 +206,12 @@ export const apiMethods = {
 
   async getData() {
     const response = await api.get('/');
+    return response.data;
+  },
+
+  // Analytics endpoint
+  async getAnalytics(): Promise<AnalyticsData> {
+    const response = await api.get('/api/donations/analytics');
     return response.data;
   },
 };

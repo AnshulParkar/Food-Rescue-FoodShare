@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { LineChart, BarChart2, MapIcon } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import DashboardNavigation from '@/components/DashboardNavigation';
@@ -22,6 +22,7 @@ import MapView from '@/components/dashboard/MapView';
 import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 import EducationalContent from '@/components/EducationalContent';
 import DonationView from '@/components/dashboard/DonationView';
+import RecipientCampaigns from '@/components/dashboard/RecipientCampaigns';
 
 // Using mock notifications for now
 const MOCK_NOTIFICATIONS: NotificationItem[] = [
@@ -51,15 +52,36 @@ const MOCK_NOTIFICATIONS: NotificationItem[] = [
 const Dashboard = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
   const [donations, setDonations] = useState<DonationItem[]>([]);
   const [activeView, setActiveView] = useState<string>('overview');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
+  // Extract the view from the URL path
+  useEffect(() => {
+    const path = location.pathname.split('/');
+    const view = path[path.length - 1];
+    
+    // Only set the view if it's a valid route
+    if (view && view !== 'dashboard') {
+      setActiveView(view);
+      
+      // Refresh donations when changing to views that need donation data
+      if (['overview', 'available', 'reserved', 'deliveries'].includes(view)) {
+        fetchDonations();
+      }
+    } else {
+      setActiveView('overview');
+      fetchDonations();
+    }
+  }, [location.pathname]);
+
   const fetchDonations = async () => {
     try {
       setIsLoading(true);
       const donationData = await apiMethods.getDonations();
+      console.log("Fetched donations:", donationData);
       setDonations(donationData);
     } catch (error) {
       console.error('Error fetching donations:', error);
@@ -72,33 +94,58 @@ const Dashboard = () => {
   const getFilteredDonations = (status?: DonationItem['status']) => {
     if (!currentUser) return [];
     
-    let filtered = [...donations];
+    // Log the actual structure of the first donation for debugging
+    if (donations.length > 0) {
+      console.log("First donation object structure:", donations[0]);
+    }
+    
+    // Handle both _id (MongoDB style) and id properties
+    let filtered = [...donations].filter(donation => {
+      // Check if the donation exists and has either id or _id
+      return donation && (donation.id || donation._id);
+    });
+    console.log("After ID filter:", filtered);
     
     if (status) {
       filtered = filtered.filter(donation => donation.status === status);
+      console.log(`After status '${status}' filter:`, filtered);
     }
     
     if (currentUser.role === 'donor') {
       filtered = filtered.filter(donation => donation.donorId === currentUser.id);
+      console.log("After donor filter:", filtered);
     } else if (currentUser.role === 'volunteer') {
       if (!status) {
         filtered = filtered.filter(donation => 
           donation.status === 'reserved' || donation.status === 'completed'
         );
+        console.log("After volunteer filter:", filtered);
       }
     }
     
+    console.log("Final filtered donations:", filtered);
     return filtered;
   };
 
   const handleStatusChange = async (id: string, newStatus: DonationItem['status']) => {
+    if (!id) {
+      console.error("Cannot update status: Missing donation ID");
+      toast.error("Failed to update donation status: Missing ID");
+      return;
+    }
+    
     try {
+      console.log(`Updating donation ${id} to status: ${newStatus}`);
       const response = await apiMethods.updateDonationStatus(id, newStatus);
       
       // Update local state with the updated donation
-      setDonations(donations.map(donation => 
-        donation.id === id ? { ...donation, status: newStatus } : donation
-      ));
+      setDonations(donations.map(donation => {
+        // Check if this is the donation we're updating (using either id or _id)
+        if ((donation.id && donation.id === id) || (donation._id && donation._id === id)) {
+          return { ...donation, status: newStatus };
+        }
+        return donation;
+      }));
       
       if (newStatus === 'reserved') {
         toast.success("Donation reserved successfully!");
@@ -125,6 +172,7 @@ const Dashboard = () => {
         quantity: formData.quantity,
         imageUrl: formData.imageUrl,
         foodType: formData.foodType,
+        status: 'available',
       };
       
       const response = await apiMethods.createDonation(donationData);
@@ -160,7 +208,8 @@ const Dashboard = () => {
       case 'overview':
         return (
           <DashboardOverview 
-            currentUser={currentUser}
+            user={currentUser}
+            donations={donations}
             notifications={notifications}
             setNotifications={setNotifications}
             getFilteredDonations={getFilteredDonations}
@@ -204,10 +253,13 @@ const Dashboard = () => {
         return <EducationalContent />;
         
       case 'map':
-        return <MapView />;
+        return <MapView donations={donations} />;
         
       case 'refresh':
         return <RefreshView setActiveView={setActiveView} onRefresh={fetchDonations} />;
+        
+      case 'campaigns':
+        return <RecipientCampaigns />;
         
       default:
         return <DefaultView />;
