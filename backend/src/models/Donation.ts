@@ -13,6 +13,8 @@ export interface IDonation extends Document {
   foodType: string;
   createdAt: Date;
   updatedAt: Date;
+  recipientId: string | null;
+  pickupTime: Date | null;
 }
 
 const donationSchema = new mongoose.Schema({
@@ -64,6 +66,15 @@ const donationSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
+  },
+  recipientId: {
+    type: String,
+    ref: 'User',
+    default: null
+  },
+  pickupTime: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

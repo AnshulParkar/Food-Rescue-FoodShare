@@ -31,6 +31,9 @@ import { cn } from "@/lib/utils";
 import ShelfLifeValidator, { ValidationResult } from "./ShelfLifeValidator";
 import { Separator } from "@/components/ui/separator";
 import MapPopup from "./MapPopup";
+import ImageUpload from './ImageUpload';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { donationFormSchema } from "@/lib/validations/donation";
 
 interface DonationFormProps {
   onSubmit: (data: DonationFormValues) => void;
@@ -74,30 +77,33 @@ const foodImageOptions = [
   "https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
   "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
   "https://images.unsplash.com/photo-1593759608142-e08b84568198?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-4FujjkcI40g?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
 ];
 
 const DonationForm = ({ onSubmit }: DonationFormProps) => {
-  const [selectedImage, setSelectedImage] = useState(foodImageOptions[0]);
-  const [validationResult, setValidationResult] =
-    useState<ValidationResult | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [validationCompleted, setValidationCompleted] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
+
   const handleLocationSelect = (lat: number, lng: number) => {
     const locationString = `Lat: ${lat}, Lng: ${lng}`;
     setSelectedLocation(locationString);
     setMapOpen(false);
-    form.setValue("location", locationString); // Update the form value
+    form.setValue("location", locationString);
   };
+
   const form = useForm<DonationFormValues>({
+    resolver: zodResolver(donationFormSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      foodType: "",
-      quantity: "",
-      location: "",
-      expiry: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-      imageUrl: selectedImage,
+      title: '',
+      description: '',
+      location: '',
+      expiry: new Date(),
+      quantity: '',
+      foodType: '',
+      imageUrl: '',
     },
   });
 
@@ -137,6 +143,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
 
     // Reset the form
     form.reset();
+    setSelectedImage('');
     setValidationResult(null);
     setValidationCompleted(false);
 
@@ -346,33 +353,25 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
             )}
           />
 
-          <div>
-            <FormLabel className="block mb-2">Choose an Image</FormLabel>
-            <div className="grid grid-cols-3 gap-2">
-              {foodImageOptions.map((image, index) => (
-                <div
-                  key={index}
-                  className={`relative cursor-pointer rounded-md overflow-hidden border-2 transition-all ${
-                    selectedImage === image
-                      ? "border-foodshare-500 ring-2 ring-foodshare-200"
-                      : "border-transparent hover:border-foodshare-200"
-                  }`}
-                  onClick={() => setSelectedImage(image)}
-                >
-                  <img
-                    src={image}
-                    alt={`Food option ${index + 1}`}
-                    className="h-20 w-full object-cover"
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Food Image</FormLabel>
+                <FormControl>
+                  <ImageUpload
+                    onImageSelect={(url) => {
+                      setSelectedImage(url);
+                      field.onChange(url);
+                    }}
+                    currentImageUrl={selectedImage}
                   />
-                  {selectedImage === image && (
-                    <div className="absolute top-1 right-1 bg-foodshare-500 rounded-full w-5 h-5 flex items-center justify-center">
-                      <Plus className="h-3 w-3 text-white rotate-45" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <Button

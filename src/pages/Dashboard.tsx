@@ -127,7 +127,7 @@ const Dashboard = () => {
     return filtered;
   };
 
-  const handleStatusChange = async (id: string, newStatus: DonationItem['status']) => {
+  const handleStatusChange = async (id: string, newStatus: DonationItem['status'], recipientId?: string, pickupTime?: Date) => {
     if (!id) {
       console.error("Cannot update status: Missing donation ID");
       toast.error("Failed to update donation status: Missing ID");
@@ -136,19 +136,24 @@ const Dashboard = () => {
     
     try {
       console.log(`Updating donation ${id} to status: ${newStatus}`);
-      const response = await apiMethods.updateDonationStatus(id, newStatus);
+      const response = await apiMethods.updateDonationStatus(id, newStatus, recipientId, pickupTime);
       
       // Update local state with the updated donation
       setDonations(donations.map(donation => {
         // Check if this is the donation we're updating (using either id or _id)
         if ((donation.id && donation.id === id) || (donation._id && donation._id === id)) {
-          return { ...donation, status: newStatus };
+          return { 
+            ...donation, 
+            status: newStatus,
+            recipientId: recipientId || donation.recipientId,
+            pickupTime: pickupTime ? pickupTime.toISOString() : donation.pickupTime
+          };
         }
         return donation;
       }));
       
       if (newStatus === 'reserved') {
-        toast.success("Donation reserved successfully!");
+        toast.success("Donation reserved successfully! Check your reservations for pickup details.");
       } else if (newStatus === 'completed') {
         toast.success("Donation marked as completed!");
       }

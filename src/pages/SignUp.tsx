@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertCircle, ArrowLeft, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const SignUp = () => {
   const { signup, currentUser, isLoading } = useAuth();
@@ -16,6 +17,7 @@ const SignUp = () => {
   const [role, setRole] = useState<'donor' | 'recipient' | 'volunteer' | ''>('');
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (currentUser) {
     return <Navigate to="/dashboard" replace />;
@@ -37,6 +39,7 @@ const SignUp = () => {
     }
 
     try {
+      setIsSubmitting(true);
       await signup({
         name,
         username,
@@ -44,8 +47,12 @@ const SignUp = () => {
         password,
         role: role as 'donor' | 'recipient' | 'volunteer'
       });
-    } catch (err) {
-      setError('Failed to create an account. Please try again.');
+      toast.success('Account created successfully!');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to create an account. Please try again.');
+      toast.error('Failed to create account');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -136,7 +143,7 @@ const SignUp = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {step === 1 && (
                 <>
                   <div className="space-y-1.5">
@@ -204,31 +211,19 @@ const SignUp = () => {
 
               {step === 2 && (
                 <>
-                  <div className="mb-4">
-                    <h3 className="text-lg font-medium mb-2">I want to join as:</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Select the role that best describes how you'll use FoodShare
-                    </p>
-                    
-                    <RadioGroup 
-                      value={role} 
+                  <div className="space-y-4">
+                    <Label>Select Your Role</Label>
+                    <RadioGroup
+                      value={role}
                       onValueChange={(value) => setRole(value as 'donor' | 'recipient' | 'volunteer')}
                       className="space-y-3"
                     >
                       {roleOptions.map((option) => (
                         <div 
                           key={option.id}
-                          className={`relative border rounded-lg p-4 cursor-pointer transition-all ${
-                            role === option.id 
-                              ? 'border-foodshare-500 bg-foodshare-50 dark:bg-foodshare-900/20' 
-                              : 'border-border hover:border-foodshare-200'
-                          }`}
+                          className="flex items-start space-x-3 p-3 rounded-lg border border-border/50 hover:border-foodshare-200 transition-colors cursor-pointer"
                         >
-                          <RadioGroupItem 
-                            value={option.id} 
-                            id={option.id} 
-                            className="sr-only" 
-                          />
+                          <RadioGroupItem value={option.id} id={option.id} />
                           <div className="flex items-start">
                             <span className="text-xl mr-3">{option.icon}</span>
                             <div>
@@ -260,28 +255,26 @@ const SignUp = () => {
                     <Button 
                       type="submit" 
                       className="flex-1 bg-foodshare-500 hover:bg-foodshare-600 text-white"
-                      disabled={isLoading || !role}
+                      disabled={isLoading || isSubmitting || !role}
                     >
-                      {isLoading ? 'Creating Account...' : 'Create Account'}
+                      {isLoading || isSubmitting ? 'Creating Account...' : 'Create Account'}
                     </Button>
                   </div>
                 </>
               )}
-
-              {step === 1 && (
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Already have an account?{' '}
-                    <Link 
-                      to="/signin" 
-                      className="text-foodshare-600 hover:text-foodshare-700 transition-colors font-medium"
-                    >
-                      Sign in
-                    </Link>
-                  </p>
-                </div>
-              )}
             </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <Link 
+                  to="/signin" 
+                  className="text-foodshare-600 hover:text-foodshare-700 transition-colors font-medium"
+                >
+                  Sign in
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

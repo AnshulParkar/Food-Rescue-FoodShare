@@ -28,6 +28,8 @@ export interface DonationItem {
   foodType: string;
   createdAt: string;
   updatedAt?: string;
+  recipientId?: string | null;
+  pickupTime?: string | null;
 }
 
 export interface CreateDonationData {
@@ -194,9 +196,25 @@ export const apiMethods = {
     return response.data;
   },
 
-  async updateDonationStatus(id: string, status: 'available' | 'reserved' | 'completed'): Promise<{ message: string; donation: DonationItem }> {
-    const response = await api.put(`/api/donations/${id}/status`, { status });
-    return response.data;
+  updateDonationStatus: async (
+    id: string, 
+    status: DonationItem['status'],
+    recipientId?: string,
+    pickupTime?: Date
+  ): Promise<{ message: string; donation: DonationItem }> => {
+    const response = await fetch(`${API_BASE_URL}/donations/${id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status, recipientId, pickupTime }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update donation status');
+    }
+
+    return response.json();
   },
 
   async deleteDonation(id: string): Promise<{ message: string }> {

@@ -1,5 +1,5 @@
 import express from 'express';
-import { validateExpiry } from '../controllers/imageValidationController.js';
+import { validateExpiry } from '../controllers/imageValidationController';
 
 const router = express.Router();
 

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import Campaign, { ICampaign } from '../models/Campaign.js';
-import CampaignDonation, { ICampaignDonation } from '../models/CampaignDonation.js';
+import Campaign, { ICampaign } from '../models/Campaign';
+import CampaignDonation, { ICampaignDonation } from '../models/CampaignDonation';
 import mongoose from 'mongoose';
 
 // Get all campaigns

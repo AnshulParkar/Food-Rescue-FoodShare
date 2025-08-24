@@ -54,8 +54,8 @@ const Hero = () => {
 
         <div className="mt-20 lg:mt-32 max-w-5xl mx-auto animate-blur-in" style={{ animationDelay: '0.4s' }}>
           <div className="relative rounded-xl overflow-hidden shadow-2xl">
-            <h2>Major food waste in wedding industry</h2>
-            <p>According to the NGO Feeding India, 10 to 20 per cent of the food served at weddings goes to waste</p>
+            {/* <h2>Major food waste in wedding industry</h2> */}
+            {/* <p>According to the NGO Feeding India, 10 to 20 per cent of the food served at weddings goes to waste</p> */}
             <img 
               src="https://images.unsplash.com/photo-1587271407850-8d438ca9fdf2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
               alt="Food donation" 

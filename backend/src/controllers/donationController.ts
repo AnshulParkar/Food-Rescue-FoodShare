@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Donation } from '../models/Donation.js';
+import { Donation } from '../models/Donation';
 
 // Get all donations with optional filtering
 export const getDonations = async (req: Request, res: Response) => {
@@ -84,15 +84,26 @@ export const updateDonation = async (req: Request, res: Response) => {
 export const updateDonationStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, recipientId, pickupTime } = req.body;
     
     if (!status || !['available', 'reserved', 'completed'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
+
+    const updateData: any = { status };
+    
+    // If status is reserved, require recipientId and pickupTime
+    if (status === 'reserved') {
+      if (!recipientId || !pickupTime) {
+        return res.status(400).json({ message: 'Recipient ID and pickup time are required for reservation' });
+      }
+      updateData.recipientId = recipientId;
+      updateData.pickupTime = new Date(pickupTime);
+    }
     
     const updatedDonation = await Donation.findByIdAndUpdate(
       id,
-      { status },
+      updateData,
       { new: true }
     );
     

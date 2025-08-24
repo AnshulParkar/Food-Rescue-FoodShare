@@ -7,8 +7,8 @@ import {
   deleteCampaign, 
   donateToCampaign, 
   getUserCampaigns 
-} from '../controllers/campaignController.js';
-import { authenticateToken } from '../middleware/auth.js';
+} from '../controllers/campaignController';
+import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
 

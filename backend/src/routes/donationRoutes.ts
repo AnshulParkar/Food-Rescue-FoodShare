@@ -7,7 +7,7 @@ import {
   updateDonationStatus,
   deleteDonation,
   getAnalytics
-} from '../controllers/donationController.js';
+} from '../controllers/donationController';
 
 const router = express.Router();
 

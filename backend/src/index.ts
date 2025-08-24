@@ -2,11 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import userRoutes from './routes/userRoutes.js';
-import authRoutes from './routes/authRoutes.js';
-import donationRoutes from './routes/donationRoutes.js';
-import campaignRoutes from './routes/campaignRoutes.js';
-import imageValidationRoutes from './routes/imageValidationRoutes.js';
+import path from 'path';
+import userRoutes from './routes/userRoutes';
+import authRoutes from './routes/authRoutes';
+import donationRoutes from './routes/donationRoutes';
+import campaignRoutes from './routes/campaignRoutes';
+import imageValidationRoutes from './routes/imageValidationRoutes';
+import imageUploadRoutes from './routes/imageUploadRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -19,26 +21,13 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI;
+// Serve static files from the public directory
+app.use(express.static(path.join(process.cwd(), 'public')));
 
-if (!MONGODB_URI) {
-  console.error('MONGODB_URI is not defined in environment variables');
-  process.exit(1);
-}
-
-mongoose.connect(MONGODB_URI, {
-  // These options help with MongoDB Atlas connection
-  retryWrites: true,
-  w: 'majority'
-})
-.then(() => {
-  console.log('Connected to MongoDB Atlas successfully');
-})
-.catch((error) => {
-  console.error('MongoDB connection error:', error);
-  process.exit(1);
-});
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/foodshare')
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -46,13 +35,14 @@ app.use('/api/users', userRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api', imageValidationRoutes);
+app.use('/api', imageUploadRoutes);
 
-// Basic route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the API' });
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Start server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
